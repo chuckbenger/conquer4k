@@ -24,6 +24,7 @@
             <option value="$PROJECT_DIR$/services/auth" />
             <option value="$PROJECT_DIR$/shared" />
             <option value="$PROJECT_DIR$/shared/network" />
+            <option value="$PROJECT_DIR$/shared/protocol" />
           </set>
         </option>
       </GradleProjectSettings>
