@@ -1,4 +1,4 @@
-package com.tkblackbelt.services.auth
+package com.tkblackbelt.conquer4k.services.auth
 
 /**
  * Entry point for the Auth service.

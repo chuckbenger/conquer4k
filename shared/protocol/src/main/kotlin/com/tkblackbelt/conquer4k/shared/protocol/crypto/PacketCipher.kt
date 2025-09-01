@@ -1,4 +1,4 @@
-package com.tkblackbelt.shared.protocol.crypto
+package com.tkblackbelt.conquer4k.shared.protocol.crypto
 
 /**
  * Packet Cipher Implemented in the 4298 client version.
