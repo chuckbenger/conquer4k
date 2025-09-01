@@ -2,7 +2,7 @@
 
 Private server project for the classic MMORPG Conquer Online (patch 4294). The goal is a clean, modular Kotlin codebase that can evolve from a modular monolith into separate services as features mature.
 
-For educational and research use only. Not affiliated with or endorsed by TQ Digital
+For educational and research use only. Not affiliated with or endorsed by TQ Digital.
 
 ## Modules
 - `services/auth`: Auth service entrypoint (`com.tkblackbelt.services.auth.AuthServerKt`).
