@@ -4,5 +4,10 @@ plugins {
 }
 
 dependencies {
-    // Keep this lightweight; add Netty/Ktor later when needed.
+    implementation(libs.kotlinxCoroutines)
+    implementation(libs.ktor.network)
+
+    testImplementation(libs.bundles.test)
+    testImplementation(libs.kotlinxCoroutines)
+    testImplementation(libs.ktor.network)
 }
