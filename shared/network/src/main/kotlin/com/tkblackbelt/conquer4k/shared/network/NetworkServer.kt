@@ -1,4 +1,4 @@
-package com.tkblackbelt.shared.network
+package com.tkblackbelt.conquer4k.shared.network
 
 /** Lightweight networking abstractions.
  * Concrete implementations (e.g., Netty) can be added later without changing service code.
