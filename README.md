@@ -1,25 +1,34 @@
 # conquer4k
 
-This project uses [Gradle](https://gradle.org/).
-To build and run the application, use the *Gradle* tool window by clicking the Gradle icon in the right-hand toolbar,
-or run it directly from the terminal:
+Private server project for the classic MMORPG Conquer Online (patch 4294). The goal is a clean, modular Kotlin codebase that can evolve from a modular monolith into separate services as features mature.
 
-* Run `./gradlew run` to build and run the application.
-* Run `./gradlew build` to only build the application.
-* Run `./gradlew check` to run all checks, including tests.
-* Run `./gradlew clean` to clean all build outputs.
+For educational and research use only. Not affiliated with or endorsed by TQ Digital.
 
-Note the usage of the Gradle Wrapper (`./gradlew`).
-This is the suggested way to use Gradle in production projects.
+## Modules
+- `services/auth`: Auth service entrypoint (`com.tkblackbelt.services.auth.AuthServerKt`).
+- `shared/network`: Networking interfaces and stubs to decouple transports.
+- `shared/protocol`: Protocol scaffold (no code yet) where packet models/codecs will live.
+- `buildSrc`: Shared Gradle convention (`buildsrc.convention.kotlin-jvm`).
 
-[Learn more about the Gradle Wrapper](https://docs.gradle.org/current/userguide/gradle_wrapper.html).
+## Tech Stack
+- Gradle 8.13 (Wrapper), Kotlin 2.2.0, JVM Toolchain 21 (Foojay resolver).
+- Ktor 3.0.0 (server-core, server-netty, network).
+- Koin 4.0.0 for DI.
+- Database: Exposed 1.0.0-beta-3 (core/dao/r2dbc) + R2DBC Postgres 0.8.13.RELEASE, pool 1.0.1.RELEASE.
+- Kotlinx: coroutines 1.9.0, serialization-json 1.7.3, datetime 0.6.1.
+- Logging: kotlin-logging 5.1.0 + Logback 1.5.18.
+- Testing: JUnit 5 (BOM 5.10.2), Kotest 5.9.1, MockK 1.13.10.
+- Formatting: Spotless 6.25.0 (available via catalog).
 
-[Learn more about Gradle tasks](https://docs.gradle.org/current/userguide/command_line_interface.html#common_tasks).
+## Build & Run
+- List modules: `./gradlew projects`
+- Build all: `./gradlew build`
+- Run tests: `./gradlew test`
+- Run Auth service: `./gradlew :services:auth:run`
 
-This project follows the suggested multi-module setup and consists of the `app` and `utils` subprojects.
-The shared build logic was extracted to a convention plugin located in `buildSrc`.
+The build uses the Gradle Wrapper (`./gradlew`) and a version catalog (`gradle/libs.versions.toml`) for dependency management.
 
-This project uses a version catalog (see `gradle/libs.versions.toml`) to declare and version dependencies
-and both a build cache and a configuration cache (see `gradle.properties`).
-
-For educational use only. Not affiliated with or endorsed by TQ Digital.
+## Development Notes
+- Services should depend only on `shared:*` modules (avoid service→service deps).
+- Protocol work belongs in `shared/protocol`; networking abstractions in `shared/network`.
+- See `AGENTS.md` for contributor guidelines and conventions.
