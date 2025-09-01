@@ -5,6 +5,7 @@ package com.tkblackbelt.shared.network
  */
 interface NetworkServer {
     fun start()
+
     fun stop()
 }
 
@@ -14,7 +15,9 @@ data class ServerConfig(
 )
 
 /** No-op server placeholder until a real transport is chosen. */
-class NoopNetworkServer(private val config: ServerConfig) : NetworkServer {
+class NoopNetworkServer(
+    private val config: ServerConfig,
+) : NetworkServer {
     override fun start() {
         println("[network] Noop server listening on ${'$'}{config.host}:${'$'}{config.port} (placeholder)")
     }
@@ -23,4 +26,3 @@ class NoopNetworkServer(private val config: ServerConfig) : NetworkServer {
         println("[network] Noop server stopped")
     }
 }
-

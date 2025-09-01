@@ -13,4 +13,3 @@ application {
     // Kotlin top-level function in AuthServer.kt compiles to AuthServerKt
     mainClass = "com.tkblackbelt.services.auth.AuthServerKt"
 }
-

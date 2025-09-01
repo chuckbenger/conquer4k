@@ -20,4 +20,3 @@ class AuthServer {
         println("[auth] Stopping Auth service...")
     }
 }
-

@@ -7,6 +7,7 @@ import org.gradle.api.tasks.testing.logging.TestLogEvent
 plugins {
     // Apply the Kotlin JVM plugin to add support for Kotlin in JVM projects.
     kotlin("jvm")
+    id("com.diffplug.spotless")
 }
 
 kotlin {
@@ -25,5 +26,16 @@ tasks.withType<Test>().configureEach {
             TestLogEvent.PASSED,
             TestLogEvent.SKIPPED
         )
+    }
+}
+
+spotless {
+    kotlin {
+        target("**/*.kt", "**/*.kts")
+        ktlint("1.3.1")
+    }
+    kotlinGradle {
+        target("**/*.gradle.kts")
+        ktlint("1.3.1")
     }
 }
