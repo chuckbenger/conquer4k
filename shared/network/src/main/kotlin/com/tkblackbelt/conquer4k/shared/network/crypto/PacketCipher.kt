@@ -1,4 +1,6 @@
-package com.tkblackbelt.conquer4k.shared.protocol.crypto
+package com.tkblackbelt.conquer4k.shared.network.crypto
+
+import kotlinx.io.Buffer
 
 /**
  * Packet Cipher Implemented in the 4298 client version.
@@ -97,19 +99,19 @@ abstract class PacketCipher {
     private var inCounter: Int = 0
     private var outCounter: Int = 0
 
-//    fun encrypt(buffer: Buffer) {
-//        val availableBytes = buffer.size.toInt()
-//        for (index in 0 until availableBytes) {
-//            buffer.writeByte(encryptByte(buffer.readByte()))
-//        }
-//    }
-//
-//    fun decrypt(buffer: Buffer) {
-//        val availableBytes = buffer.size.toInt()
-//        for (index in 0 until availableBytes) {
-//            buffer.writeByte(decryptByte(buffer.readByte()))
-//        }
-//    }
+    fun encrypt(buffer: Buffer) {
+        val availableBytes = buffer.size.toInt()
+        for (index in 0 until availableBytes) {
+            buffer.writeByte(encryptByte(buffer.readByte()))
+        }
+    }
+
+    fun decrypt(buffer: Buffer) {
+        val availableBytes = buffer.size.toInt()
+        for (index in 0 until availableBytes) {
+            buffer.writeByte(decryptByte(buffer.readByte()))
+        }
+    }
 
     fun decryptShortLe(short: Short): Short {
         val lowByte = (short.toInt() and 0xFF).toByte()

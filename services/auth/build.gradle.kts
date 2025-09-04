@@ -7,6 +7,9 @@ plugins {
 
 dependencies {
     implementation(project(":shared:network"))
+    implementation(libs.bundles.kotlinxEcosystem)
+    implementation(libs.bundles.koin)
+    implementation(libs.bundles.logging)
 }
 
 application {

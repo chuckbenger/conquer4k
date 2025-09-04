@@ -4,5 +4,7 @@ plugins {
 }
 
 dependencies {
-    // Keep this lightweight; add Netty/Ktor later when needed.
+    implementation(libs.bundles.kotlinxEcosystem)
+    implementation(libs.bundles.ktor.server)
+    implementation(libs.bundles.logging)
 }

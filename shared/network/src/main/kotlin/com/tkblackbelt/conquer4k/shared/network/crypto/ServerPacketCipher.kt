@@ -1,5 +1,6 @@
-package com.tkblackbelt.conquer4k.shared.protocol.crypto
+package com.tkblackbelt.conquer4k.shared.network.crypto
 
+import kotlin.collections.get
 import kotlin.experimental.and
 import kotlin.experimental.xor
 
