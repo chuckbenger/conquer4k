@@ -1,7 +1,6 @@
 package com.tkblackbelt.conquer4k.shared.protocol.serder
 
 import com.tkblackbelt.conquer4k.shared.protocol.packets.Packet
-import io.github.oshai.kotlinlogging.KotlinLogging
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.map
 import kotlinx.io.Buffer
@@ -62,7 +61,9 @@ internal class ReusablePacketDecoder : AbstractDecoder() {
 
     override fun decodeEnum(descriptor: SerialDescriptor): Int = decodeInt()
 
-    override fun beginStructure(descriptor: SerialDescriptor): CompositeDecoder = this
+    override fun beginStructure(descriptor: SerialDescriptor): CompositeDecoder =
+        this
+            .also { index = 0 }
 
     override fun decodeElementIndex(descriptor: SerialDescriptor): Int =
         if (index < descriptor.elementsCount) index++ else CompositeDecoder.DECODE_DONE
@@ -76,11 +77,9 @@ internal object PacketDecoderPool {
     fun obtain(): ReusablePacketDecoder = local.get() ?: ReusablePacketDecoder().also { local.set(it) }
 }
 
-private val logger = KotlinLogging.logger { }
-
 fun Flow<Buffer>.decodePacket(): Flow<Packet> =
     map { buffer ->
-        val d = PacketDecoderPool.obtain()
-        d.reset(PacketSerializer.serializersModule, buffer)
-        d.decodeSerializableValue(PacketSerializer)
+        val decoder = PacketDecoderPool.obtain()
+        decoder.reset(PacketSerializer.serializersModule, buffer)
+        decoder.decodeSerializableValue(PacketSerializer)
     }

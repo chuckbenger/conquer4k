@@ -12,11 +12,11 @@ import kotlinx.serialization.descriptors.buildClassSerialDescriptor
 import kotlinx.serialization.encoding.Decoder
 import kotlinx.serialization.encoding.Encoder
 import kotlinx.serialization.modules.SerializersModule
-import kotlin.jvm.java
-import kotlin.jvm.javaClass
+import kotlin.reflect.KClass
 
 object PacketSerializer : KSerializer<Packet> {
-    val serializersModule = SerializersModule {}
+    // No polymorphic configuration yet; keep an explicit empty module
+    val serializersModule: SerializersModule = SerializersModule {}
 
     override val descriptor: SerialDescriptor = buildClassSerialDescriptor("Packet")
 
@@ -26,10 +26,10 @@ object PacketSerializer : KSerializer<Packet> {
             2.toShort() to IntPacket.serializer(),
         )
 
-    private val typeByClass: Map<Class<out Packet>, Short> =
+    private val typeByClass: Map<KClass<out Packet>, Short> =
         mapOf(
-            StringPacket::class.java to 1.toShort(),
-            IntPacket::class.java to 2.toShort(),
+            StringPacket::class to 1.toShort(),
+            IntPacket::class to 2.toShort(),
         )
 
     override fun deserialize(decoder: Decoder): Packet {
@@ -51,10 +51,12 @@ object PacketSerializer : KSerializer<Packet> {
             encoder as? ReusablePacketEncoder
                 ?: throw SerializationException("Serializer must be ReusablePacketEncoder")
 
-        val cls = value.javaClass
+        val cls = value::class
         val type =
             typeByClass[cls]
-                ?: throw SerializationException("Unknown packet class: ${cls.name}")
+                ?: throw SerializationException(
+                    "Unknown packet class: ${cls.qualifiedName ?: cls.toString()}",
+                )
 
         pktEnc.dst.writeShortLe(type)
 

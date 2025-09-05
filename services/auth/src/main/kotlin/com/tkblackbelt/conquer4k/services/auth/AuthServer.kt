@@ -1,15 +1,11 @@
 package com.tkblackbelt.conquer4k.services.auth
 
 import com.tkblackbelt.conquer4k.shared.network.api.Connection
+import com.tkblackbelt.conquer4k.shared.network.transport.tcp.TcpClient
+import com.tkblackbelt.conquer4k.shared.network.transport.tcp.TcpClientConfig
 import com.tkblackbelt.conquer4k.shared.network.transport.tcp.TcpServer
 import com.tkblackbelt.conquer4k.shared.network.transport.tcp.TcpServerConfig
 import com.tkblackbelt.conquer4k.shared.protocol.serder.decodePacket
-import io.ktor.network.selector.ActorSelectorManager
-import io.ktor.network.sockets.InetSocketAddress
-import io.ktor.network.sockets.aSocket
-import io.ktor.network.sockets.openWriteChannel
-import io.ktor.utils.io.ByteWriteChannel
-import io.ktor.utils.io.writeBuffer
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
@@ -32,19 +28,13 @@ fun main() {
                 }
             }
         tcpServer.start()
-
-        val selector = ActorSelectorManager(Dispatchers.IO)
         launch(Dispatchers.IO) {
-            val socket = aSocket(selector).tcp().connect(InetSocketAddress("0.0.0.0", 8921))
-            println("Connected to 127.0.0.1:1234")
+            val socket = TcpClient(TcpClientConfig("0.0.0.0", 8921)).connect()
 
-            val writeChannel: ByteWriteChannel = socket.openWriteChannel(autoFlush = false)
             val buffer = Buffer()
-            buffer.writeShortLe(6)
             buffer.writeShortLe(2)
             buffer.writeIntLe(3)
-            writeChannel.writeBuffer(buffer)
-            writeChannel.flush()
+            socket.sendFrame(buffer)
         }
 
         while (true) {

@@ -12,7 +12,7 @@ import kotlinx.serialization.encoding.AbstractEncoder
 import kotlinx.serialization.encoding.CompositeEncoder
 import kotlinx.serialization.encoding.Encoder
 import kotlinx.serialization.modules.SerializersModule
-import java.nio.charset.StandardCharsets.US_ASCII
+import kotlin.text.Charsets
 
 @OptIn(ExperimentalSerializationApi::class)
 internal class ReusablePacketEncoder : AbstractEncoder() {
@@ -74,7 +74,7 @@ internal class ReusablePacketEncoder : AbstractEncoder() {
             dst.writeByte(0)
             return
         }
-        val bytes = value.toByteArray(US_ASCII)
+        val bytes = value.toByteArray(Charsets.US_ASCII)
         require(bytes.size <= 0xFF) { "String too long (${bytes.size} > 255) for 1-byte length prefix" }
         dst.writeByte(bytes.size.toByte())
         dst.write(bytes, 0, bytes.size)
