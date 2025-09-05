@@ -1,21 +1,18 @@
-package com.tkblackbelt.conquer4k.shared.network.server
+package com.tkblackbelt.conquer4k.shared.network.transport.tcp
 
+import com.tkblackbelt.conquer4k.shared.network.api.ConnectionHandler
+import com.tkblackbelt.conquer4k.shared.network.api.NetworkServer
 import io.github.oshai.kotlinlogging.KotlinLogging
 import io.ktor.network.selector.SelectorManager
-import io.ktor.network.sockets.Socket
 import io.ktor.network.sockets.aSocket
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.cancel
 import kotlinx.coroutines.launch
-import java.io.Closeable
 
 private val logger = KotlinLogging.logger {}
 
-fun interface TcpServerHandler {
-    suspend fun handle(socket: Socket)
-}
 
 data class TcpServerConfig(
     val host: String,
@@ -24,11 +21,11 @@ data class TcpServerConfig(
 
 class TcpServer(
     private val config: TcpServerConfig,
-    private val handler: TcpServerHandler,
-) : Closeable {
+    private val handler: ConnectionHandler,
+) : NetworkServer {
     private val scope = CoroutineScope(SupervisorJob() + Dispatchers.IO)
 
-    suspend fun start() {
+    override suspend fun start() {
         logger.info { "Starting Tcp server... $config" }
 
         val selector = SelectorManager(Dispatchers.IO)
@@ -39,7 +36,8 @@ class TcpServer(
                 while (true) {
                     val client = server.accept()
                     logger.debug { "Client connected: $client" }
-                    launch { handler.handle(client) }
+                    val conn = TcpConnection(client, scope)
+                    launch { handler.handle(conn) }
                 }
             } finally {
                 server.close()

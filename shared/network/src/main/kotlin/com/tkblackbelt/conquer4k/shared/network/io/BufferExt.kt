@@ -1,4 +1,4 @@
-package com.tkblackbelt.conquer4k.shared.network
+package com.tkblackbelt.conquer4k.shared.network.io
 
 import kotlinx.io.Buffer
 import kotlinx.io.readByteArray
@@ -20,3 +20,4 @@ fun Buffer.toDebugString(
         append(" ${bytes.toHexString()}")
         append(" \"${bytes.toString(charset)}\"")
     }
+

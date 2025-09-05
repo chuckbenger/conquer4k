@@ -1,6 +1,5 @@
 package com.tkblackbelt.conquer4k.shared.network.crypto
 
-import kotlin.collections.get
 import kotlin.experimental.and
 import kotlin.experimental.xor
 
@@ -16,3 +15,4 @@ class ServerPacketCipher : PacketCipher() {
         return rolledByte
     }
 }
+

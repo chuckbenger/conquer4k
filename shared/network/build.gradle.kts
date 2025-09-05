@@ -4,7 +4,7 @@ plugins {
 }
 
 dependencies {
+    api(libs.bundles.ktor.server)
     implementation(libs.bundles.kotlinxEcosystem)
-    implementation(libs.bundles.ktor.server)
     implementation(libs.bundles.logging)
 }
