@@ -1,21 +1,21 @@
 package com.tkblackbelt.conquer4k.services.auth
 
+import com.tkblackbelt.conquer4k.shared.network.api.Connection
 import com.tkblackbelt.conquer4k.shared.network.transport.tcp.TcpServer
 import com.tkblackbelt.conquer4k.shared.network.transport.tcp.TcpServerConfig
-import com.tkblackbelt.conquer4k.shared.network.api.Connection
-import com.tkblackbelt.conquer4k.shared.network.io.toDebugString
+import com.tkblackbelt.conquer4k.shared.protocol.serder.decodePacket
 import io.ktor.network.selector.ActorSelectorManager
 import io.ktor.network.sockets.InetSocketAddress
 import io.ktor.network.sockets.aSocket
 import io.ktor.network.sockets.openWriteChannel
 import io.ktor.utils.io.ByteWriteChannel
-import io.ktor.utils.io.write
 import io.ktor.utils.io.writeBuffer
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.runBlocking
 import kotlinx.io.Buffer
+import kotlinx.io.writeIntLe
 import kotlinx.io.writeShortLe
 
 /**
@@ -24,13 +24,14 @@ import kotlinx.io.writeShortLe
  */
 fun main() {
     runBlocking {
-        val tcpServer = TcpServer(TcpServerConfig("0.0.0.0", 8921)) { conn: Connection ->
-            conn.incomingFrames().collect { frame ->
-                println("Received frame ${frame.toDebugString()}")
+        val tcpServer =
+            TcpServer(TcpServerConfig("0.0.0.0", 8921)) { conn: Connection ->
+                conn.incomingFrames().decodePacket().collect { packet ->
+                    println("Received packet $packet")
+                    conn.close()
+                }
             }
-        }
         tcpServer.start()
-
 
         val selector = ActorSelectorManager(Dispatchers.IO)
         launch(Dispatchers.IO) {
@@ -39,19 +40,14 @@ fun main() {
 
             val writeChannel: ByteWriteChannel = socket.openWriteChannel(autoFlush = false)
             val buffer = Buffer()
+            buffer.writeShortLe(6)
             buffer.writeShortLe(2)
-            buffer.writeShortLe(3)
+            buffer.writeIntLe(3)
             writeChannel.writeBuffer(buffer)
-            writeChannel.flush()
-
-            val buffer2 = Buffer()
-            buffer2.writeShortLe(2)
-            buffer2.writeShortLe(5)
-            writeChannel.writeBuffer(buffer2)
             writeChannel.flush()
         }
 
-        while(true) {
+        while (true) {
             delay(1000)
         }
     }

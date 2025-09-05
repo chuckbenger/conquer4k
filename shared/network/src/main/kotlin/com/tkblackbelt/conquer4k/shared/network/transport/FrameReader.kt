@@ -15,9 +15,7 @@ private const val MAX_PACKET_SIZE = 1024
 private const val NEED_HEADER = -1
 
 @OptIn(InternalAPI::class)
-internal fun ByteReadChannel.frames(
-    cipher: PacketCipher?
-): Flow<Buffer> =
+internal fun ByteReadChannel.frames(cipher: PacketCipher?): Flow<Buffer> =
     flow {
         var state: Int = NEED_HEADER // -1 => need header; otherwise => body size
 
@@ -45,6 +43,7 @@ internal fun ByteReadChannel.frames(
                     cipher?.decrypt(buf)
                     emit(buf)
 
+                    state = NEED_HEADER
                     progressed = true
                 }
             }

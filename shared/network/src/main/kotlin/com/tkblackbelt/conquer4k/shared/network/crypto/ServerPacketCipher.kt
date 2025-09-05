@@ -15,4 +15,3 @@ class ServerPacketCipher : PacketCipher() {
         return rolledByte
     }
 }
-

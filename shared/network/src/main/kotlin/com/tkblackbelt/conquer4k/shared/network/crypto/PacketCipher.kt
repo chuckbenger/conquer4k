@@ -655,4 +655,3 @@ abstract class PacketCipher {
             )
     }
 }
-

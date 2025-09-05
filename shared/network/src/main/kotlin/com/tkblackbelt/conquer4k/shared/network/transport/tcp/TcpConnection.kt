@@ -16,7 +16,7 @@ import kotlinx.io.Buffer
 
 class TcpConnection(
     private val socket: Socket,
-    private val scope: CoroutineScope
+    private val scope: CoroutineScope,
 ) : Connection {
     private val input: ByteReadChannel = socket.openReadChannel()
     private val output: ByteWriteChannel = socket.openWriteChannel(autoFlush = true)
@@ -29,22 +29,23 @@ class TcpConnection(
         this.cipher = cipher
     }
 
-    override fun incomingFrames(): Flow<Buffer> =
-        input.frames(cipher)
+    override fun incomingFrames(): Flow<Buffer> = input.frames(cipher)
 
     override suspend fun sendFrame(frame: Buffer) {
-        if(writeChannel == null) {
-            writeChannel = scope.launchOutboundWriter(
-                output,
-                cipher
-            )
+        if (writeChannel == null) {
+            writeChannel =
+                scope.launchOutboundWriter(
+                    output,
+                    cipher,
+                )
         }
         writeChannel?.send(frame)
     }
 
     override fun close() {
-        try { socket.close() } catch (_: Throwable) {}
+        try {
+            socket.close()
+        } catch (_: Throwable) {
+        }
     }
 }
-
-

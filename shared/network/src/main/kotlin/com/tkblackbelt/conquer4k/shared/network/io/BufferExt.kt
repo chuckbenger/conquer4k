@@ -20,4 +20,3 @@ fun Buffer.toDebugString(
         append(" ${bytes.toHexString()}")
         append(" \"${bytes.toString(charset)}\"")
     }
-

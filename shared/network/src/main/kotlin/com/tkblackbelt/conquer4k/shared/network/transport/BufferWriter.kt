@@ -46,12 +46,12 @@ internal fun CoroutineScope.launchOutboundWriter(
             }
 
             suspend fun handleBuffer(body: Buffer) {
-                    val sz = body.size.toInt()
-                    val encLen = cipher?.encryptShortLe(sz.toShort()) ?: sz
-                    cipher?.encrypt(body)
-                    writer.writeShortLe(encLen.toInt())
-                    writer.writeBuffer(body)
-                    bytesSinceFlush += 2 + sz
+                val sz = body.size.toInt()
+                val encLen = cipher?.encryptShortLe(sz.toShort()) ?: sz
+                cipher?.encrypt(body)
+                writer.writeShortLe(encLen.toInt())
+                writer.writeBuffer(body)
+                bytesSinceFlush += 2 + sz
             }
 
             try {
