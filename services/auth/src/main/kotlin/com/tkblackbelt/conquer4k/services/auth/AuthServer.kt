@@ -6,6 +6,7 @@ import com.tkblackbelt.conquer4k.shared.network.transport.tcp.TcpClientConfig
 import com.tkblackbelt.conquer4k.shared.network.transport.tcp.TcpServer
 import com.tkblackbelt.conquer4k.shared.network.transport.tcp.TcpServerConfig
 import com.tkblackbelt.conquer4k.shared.protocol.serder.decodePacket
+import io.ktor.network.selector.SelectorManager
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
@@ -20,21 +21,31 @@ import kotlinx.io.writeShortLe
  */
 fun main() {
     runBlocking {
+        val manager = SelectorManager(Dispatchers.IO)
         val tcpServer =
-            TcpServer(TcpServerConfig("0.0.0.0", 8921)) { conn: Connection ->
+            TcpServer(TcpServerConfig("0.0.0.0", 8921), manager) { conn: Connection ->
                 conn.incomingFrames().decodePacket().collect { packet ->
                     println("Received packet $packet")
-                    conn.close()
                 }
+                println("Done")
             }
         tcpServer.start()
         launch(Dispatchers.IO) {
             val socket = TcpClient(TcpClientConfig("0.0.0.0", 8921)).connect()
 
-            val buffer = Buffer()
-            buffer.writeShortLe(2)
-            buffer.writeIntLe(3)
-            socket.sendFrame(buffer)
+            repeat(5) {
+                try {
+                    val buffer = Buffer()
+                    buffer.writeShortLe(2)
+                    buffer.writeIntLe(3)
+                    socket.sendFrame(buffer)
+                    delay(1000)
+                    tcpServer.close()
+                } catch (e: Exception) {
+                    println("Error: ${e.message}")
+                }
+            }
+            socket.close()
         }
 
         while (true) {

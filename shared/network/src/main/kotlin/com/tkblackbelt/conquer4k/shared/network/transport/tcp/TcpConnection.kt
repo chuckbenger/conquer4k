@@ -43,9 +43,6 @@ class TcpConnection(
     }
 
     override fun close() {
-        try {
-            socket.close()
-        } catch (_: Throwable) {
-        }
+        runCatching { socket.close() }
     }
 }
