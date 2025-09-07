@@ -6,6 +6,7 @@ import io.ktor.utils.io.ByteWriteChannel
 import io.ktor.utils.io.writeBuffer
 import io.ktor.utils.io.writeByte
 import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.cancel
 import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.channels.SendChannel
 import kotlinx.coroutines.isActive
@@ -59,7 +60,7 @@ internal fun CoroutineScope.launchOutboundWriter(
 
             try {
                 while (isActive) {
-                    val first = inbox.receiveCatching().getOrNull() ?: break
+                    val first = inbox.receive()
                     handleBuffer(first)
 
                     // opportunistically drain without suspending to reduce wakeups
@@ -74,14 +75,17 @@ internal fun CoroutineScope.launchOutboundWriter(
             } catch (_: CancellationException) {
             } catch (e: Exception) {
                 logger.error(e) { "Buffer write failed" }
+                // Fail fast: notify senders and cancel the connection scope
+                runCatching { inbox.close(e) }
+                this@launchOutboundWriter.cancel(CancellationException("outbound writer failed", e))
             } finally {
-                try {
-                    writer.flushAndClose()
-                } catch (_: Throwable) {
-                }
+                runCatching { writer.flushAndClose() }
             }
         }
 
     inbox.invokeOnClose { job.cancel() }
+    job.invokeOnCompletion { cause ->
+        if (cause != null) runCatching { inbox.close(cause) }
+    }
     return inbox
 }

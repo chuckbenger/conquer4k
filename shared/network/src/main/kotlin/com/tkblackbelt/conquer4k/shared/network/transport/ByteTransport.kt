@@ -20,7 +20,7 @@ internal class SocketByteTransport(
     private val socket: Socket,
 ) : ByteTransport {
     override val input = socket.openReadChannel()
-    override val output = socket.openWriteChannel(autoFlush = true)
+    override val output = socket.openWriteChannel()
 
     override fun close() {
         runCatching { socket.close() }
