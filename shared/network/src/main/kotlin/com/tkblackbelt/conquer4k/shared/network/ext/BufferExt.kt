@@ -1,4 +1,4 @@
-package com.tkblackbelt.conquer4k.shared.network.io
+package com.tkblackbelt.conquer4k.shared.network.ext
 
 import kotlinx.io.Buffer
 import kotlinx.io.readByteArray

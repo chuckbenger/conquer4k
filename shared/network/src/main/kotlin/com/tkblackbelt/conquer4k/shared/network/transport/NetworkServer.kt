@@ -1,4 +1,4 @@
-package com.tkblackbelt.conquer4k.shared.network.api
+package com.tkblackbelt.conquer4k.shared.network.transport
 
 import java.io.Closeable
 

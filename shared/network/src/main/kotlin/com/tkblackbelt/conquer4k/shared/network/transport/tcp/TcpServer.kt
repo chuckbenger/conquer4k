@@ -1,7 +1,8 @@
 package com.tkblackbelt.conquer4k.shared.network.transport.tcp
 
-import com.tkblackbelt.conquer4k.shared.network.api.ConnectionHandler
-import com.tkblackbelt.conquer4k.shared.network.api.NetworkServer
+import com.tkblackbelt.conquer4k.shared.network.transport.NetworkServer
+import com.tkblackbelt.conquer4k.shared.network.transport.SocketByteTransport
+import com.tkblackbelt.conquer4k.shared.network.transport.TransportHandler
 import io.github.oshai.kotlinlogging.KotlinLogging
 import io.ktor.network.selector.SelectorManager
 import io.ktor.network.sockets.ServerSocket
@@ -35,7 +36,7 @@ data class TcpServerConfig(
 class TcpServer(
     private val config: TcpServerConfig,
     private val selector: SelectorManager,
-    private val handler: ConnectionHandler,
+    private val handler: TransportHandler,
 ) : NetworkServer {
     private val scope = CoroutineScope(SupervisorJob() + Dispatchers.IO)
     private val started = AtomicBoolean(false)
@@ -98,14 +99,14 @@ class TcpServer(
 
     private fun CoroutineScope.launchHandler(socket: Socket) =
         launch(CoroutineName("tcp-conn-${socket.remoteAddress}")) {
-            val connection = TcpConnection(socket, scope)
             try {
-                handler.handle(connection)
+                val transport = SocketByteTransport(this, socket)
+                handler.handle(transport)
             } catch (_: CancellationException) {
             } catch (t: Throwable) {
                 logger.error(t) { "Handler failed for ${socket.remoteAddress}" }
             } finally {
-                runCatching { connection.close() }
+                runCatching { socket.close() }
                 connectionLimiter?.release()
             }
         }

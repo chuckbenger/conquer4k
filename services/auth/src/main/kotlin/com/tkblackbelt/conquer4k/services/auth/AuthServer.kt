@@ -1,6 +1,8 @@
 package com.tkblackbelt.conquer4k.services.auth
 
-import com.tkblackbelt.conquer4k.shared.network.api.Connection
+import com.tkblackbelt.conquer4k.shared.network.codec.PlainCodec
+import com.tkblackbelt.conquer4k.shared.network.transport.ByteTransport
+import com.tkblackbelt.conquer4k.shared.network.transport.connection.FramedConnection
 import com.tkblackbelt.conquer4k.shared.network.transport.tcp.TcpClient
 import com.tkblackbelt.conquer4k.shared.network.transport.tcp.TcpClientConfig
 import com.tkblackbelt.conquer4k.shared.network.transport.tcp.TcpServer
@@ -23,33 +25,44 @@ fun main() {
     runBlocking {
         val manager = SelectorManager(Dispatchers.IO)
         val tcpServer =
-            TcpServer(TcpServerConfig("0.0.0.0", 8921), manager) { conn: Connection ->
-                conn.incomingFrames().decodePacket().collect { packet ->
+            TcpServer(TcpServerConfig("0.0.0.0", 8921), manager) { transport: ByteTransport ->
+                val codec = PlainCodec
+                val connection = FramedConnection(transport, codec)
+
+                connection.incomingFrames().decodePacket().collect { packet ->
                     println("Received packet $packet")
                 }
+
                 println("Done")
             }
         tcpServer.start()
+
         launch(Dispatchers.IO) {
-            val socket = TcpClient(TcpClientConfig("0.0.0.0", 8921)).connect()
+            try {
+                val transport = TcpClient(TcpClientConfig("0.0.0.0", 8921)).connect()
+                val codec = PlainCodec
+                val connection = FramedConnection(transport, codec)
 
-            repeat(5) {
-                try {
-                    val buffer = Buffer()
-                    buffer.writeShortLe(2)
-                    buffer.writeIntLe(3)
-                    socket.sendFrame(buffer)
-                    delay(1000)
-                    tcpServer.close()
-                } catch (e: Exception) {
-                    println("Error: ${e.message}")
+                repeat(5) {
+                    try {
+                        val buffer = Buffer()
+                        buffer.writeShortLe(2)
+                        buffer.writeIntLe(3)
+                        connection.sendFrame(buffer)
+                        delay(1000)
+                        tcpServer.close()
+                    } catch (e: Exception) {
+                        println("Error: ${e.message}")
+                    }
                 }
+                connection.close()
+            } catch (e: Exception) {
+                println("Error: ${e.message}")
             }
-            socket.close()
-        }
 
-        while (true) {
-            delay(1000)
+            while (true) {
+                delay(1000)
+            }
         }
     }
 }
