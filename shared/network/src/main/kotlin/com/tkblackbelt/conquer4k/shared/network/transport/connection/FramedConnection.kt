@@ -20,10 +20,10 @@ class FramedConnection(
             writeBufferCapacity,
         )
 
-    override fun incomingFrames(): Flow<Buffer> = transport.input.frames(codec)
+    override fun inbound(): Flow<Buffer> = transport.input.frames(codec)
 
-    override suspend fun sendFrame(frame: Buffer) {
-        writer.send(frame)
+    override suspend fun send(buffer: Buffer) {
+        writer.send(buffer)
     }
 
     override fun close() {

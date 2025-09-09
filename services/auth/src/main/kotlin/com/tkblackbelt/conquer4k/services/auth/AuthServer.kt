@@ -29,7 +29,7 @@ fun main() {
                 val codec = PlainCodec
                 val connection = FramedConnection(transport, codec)
 
-                connection.incomingFrames().decodePacket().collect { packet ->
+                connection.inbound().decodePacket().collect { packet ->
                     println("Received packet $packet")
                 }
 
@@ -42,19 +42,21 @@ fun main() {
                 val transport = TcpClient(TcpClientConfig("0.0.0.0", 8921)).connect()
                 val codec = PlainCodec
                 val connection = FramedConnection(transport, codec)
-
+                var test = 0
                 repeat(5) {
                     try {
                         val buffer = Buffer()
                         buffer.writeShortLe(2)
-                        buffer.writeIntLe(3)
-                        connection.sendFrame(buffer)
-                        delay(1000)
-                        tcpServer.close()
+                        buffer.writeIntLe(test)
+                        connection.send(buffer)
+                        test++
+//                        delay(10000)
+//                        tcpServer.close()
                     } catch (e: Exception) {
                         println("Error: ${e.message}")
                     }
                 }
+                delay(1000)
                 connection.close()
             } catch (e: Exception) {
                 println("Error: ${e.message}")

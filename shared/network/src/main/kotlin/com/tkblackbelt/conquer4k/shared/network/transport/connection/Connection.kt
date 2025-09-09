@@ -4,7 +4,6 @@ import kotlinx.coroutines.flow.Flow
 import kotlinx.io.Buffer
 
 interface Connection : AutoCloseable {
-    fun incomingFrames(): Flow<Buffer>
-
-    suspend fun sendFrame(frame: Buffer)
+    fun inbound(): Flow<Buffer>
+    suspend fun send(buffer: Buffer)
 }

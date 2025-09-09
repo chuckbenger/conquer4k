@@ -6,11 +6,14 @@ import io.ktor.utils.io.ByteWriteChannel
 import io.ktor.utils.io.writeBuffer
 import io.ktor.utils.io.writeByte
 import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.cancel
 import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.channels.SendChannel
 import kotlinx.coroutines.isActive
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.selects.onTimeout
+import kotlinx.coroutines.selects.select
 import kotlinx.io.Buffer
 import kotlin.coroutines.cancellation.CancellationException
 
@@ -24,6 +27,7 @@ private suspend inline fun ByteWriteChannel.writeShortLe(v: Int) {
 
 private val logger = KotlinLogging.logger { }
 
+@OptIn(ExperimentalCoroutinesApi::class)
 internal fun CoroutineScope.launchOutboundWriter(
     writer: ByteWriteChannel,
     codec: FrameCodec,
@@ -41,6 +45,7 @@ internal fun CoroutineScope.launchOutboundWriter(
                 val now = System.nanoTime()
                 val timeDue = now >= nextFlushNs
                 if (force || bytesSinceFlush >= BATCH_BYTES || (timeDue && bytesSinceFlush > 0)) {
+                    println("flushing")
                     writer.flush()
                     bytesSinceFlush = 0
                     nextFlushNs = now + intervalNs
@@ -60,16 +65,22 @@ internal fun CoroutineScope.launchOutboundWriter(
 
             try {
                 while (isActive) {
-                    val first = inbox.receive()
-                    handleBuffer(first)
+                    select {
+                        inbox.onReceiveCatching { res ->
+                            val buffer = res.getOrNull() ?: return@onReceiveCatching
+                            handleBuffer(buffer)
 
-                    // opportunistically drain without suspending to reduce wakeups
-                    while (bytesSinceFlush < BATCH_BYTES) {
-                        val next = inbox.tryReceive().getOrNull() ?: break
-                        handleBuffer(next)
+                            while (bytesSinceFlush < BATCH_BYTES) {
+                                val next = inbox.tryReceive().getOrNull() ?: break
+                                handleBuffer(next)
+                            }
+
+                            flushIfNeeded()
+                        }
+                        onTimeout(FLUSH_EVERY_MS) {
+                            if (bytesSinceFlush > 0) flushIfNeeded(force = true)
+                        }
                     }
-
-                    flushIfNeeded()
                 }
                 flushIfNeeded(force = true)
             } catch (_: CancellationException) {
