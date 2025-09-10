@@ -5,5 +5,6 @@ import kotlinx.io.Buffer
 
 interface Connection : AutoCloseable {
     fun inbound(): Flow<Buffer>
+
     suspend fun send(buffer: Buffer)
 }

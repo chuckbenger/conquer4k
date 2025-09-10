@@ -33,6 +33,7 @@ internal class FrameReader(
     }
 
     private fun needsHeader() = pendingSize == NEED_HEADER
+
     private fun hasHeaderBuffered() = channel.availableForRead >= 2
 
     private fun readHeader() {
@@ -56,17 +57,18 @@ internal class FrameReader(
     }
 }
 
-internal fun ByteReadChannel.frames(codec: FrameCodec): Flow<Buffer> = flow {
-    val reader = FrameReader(this@frames, codec)
-
-    while (true) {
-        awaitContent()
+internal fun ByteReadChannel.frames(codec: FrameCodec): Flow<Buffer> =
+    flow {
+        val reader = FrameReader(this@frames, codec)
 
         while (true) {
-            val frame = reader.readFrameOrNull() ?: break
-            emit(frame)
-        }
+            awaitContent()
 
-        if (isClosedForRead) break
+            while (true) {
+                val frame = reader.readFrameOrNull() ?: break
+                emit(frame)
+            }
+
+            if (isClosedForRead) break
+        }
     }
-}

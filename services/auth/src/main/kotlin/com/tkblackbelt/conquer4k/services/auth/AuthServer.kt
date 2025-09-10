@@ -56,7 +56,7 @@ fun main() {
                         println("Error: ${e.message}")
                     }
                 }
-                delay(1000)
+                delay(10000)
                 connection.close()
             } catch (e: Exception) {
                 println("Error: ${e.message}")
