@@ -4,7 +4,7 @@
 - Purpose: Private service for the classic MMORPG Conquer Online, patch 4294.
 - Root: Gradle multi-module Kotlin/JVM (Java 21 toolchain).
 - `services/auth`: Auth service entrypoint (`com.tkblackbelt.services.auth.AuthServerKt`).
-- `shared/network`: Networking interfaces and stubs (e.g., `NetworkServer`, `NoopNetworkServer`).
+- `shared/network`: Networking interfaces and TCP transport (e.g., `NetworkServer`, `NetworkClient`, `TcpServer`, `TcpClient`), plus a framed layer (`FrameCodec`, `FrameReader/Writer`, `framedFactory`). Supports configurable frame size limits and outbound buffering/backpressure.
 - `shared/protocol`: Protocol scaffold (no code yet) for packets/codecs/registry.
 - `buildSrc`: Shared Gradle convention (`buildsrc.convention.kotlin-jvm`).
 - Key files: `settings.gradle.kts` (includes), `gradle/libs.versions.toml` (catalog).

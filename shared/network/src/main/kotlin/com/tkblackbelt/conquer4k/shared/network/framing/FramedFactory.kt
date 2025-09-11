@@ -45,10 +45,11 @@ private fun Socket.framed(
 ): Connection {
     val inChannel = openReadChannel()
     val outChannel = openWriteChannel()
-    val inbox = Channel<Buffer>(
-        capacity = config.bufferingConfig.bufferCapacity,
-        onBufferOverflow = config.bufferingConfig.overflowStrategy,
-    )
+    val inbox =
+        Channel<Buffer>(
+            capacity = config.bufferingConfig.bufferCapacity,
+            onBufferOverflow = config.bufferingConfig.overflowStrategy,
+        )
     val reader = FrameReader(inChannel, codec, config.minFrameSize, config.maxFrameSize)
     val writer =
         BufferedFrameWriter(
@@ -112,4 +113,3 @@ private fun Socket.framed(
         }
     }
 }
-

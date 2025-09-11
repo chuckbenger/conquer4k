@@ -38,10 +38,16 @@ fun main() {
 
         launch(Dispatchers.IO) {
             try {
-                val clientFactory = framedFactory(PlainCodec, FramedFactoryConfig(BufferFrameWriterConfig(
-                    flushInterval = 10.milliseconds,
-                    flushBytesSize = 1024
-                )))
+                val clientFactory =
+                    framedFactory(
+                        PlainCodec,
+                        FramedFactoryConfig(
+                            BufferFrameWriterConfig(
+                                flushInterval = 10.milliseconds,
+                                flushBytesSize = 1024,
+                            ),
+                        ),
+                    )
                 val connection = TcpClient(TcpClientConfig("0.0.0.0", 8922), manager, this, clientFactory).connect()
                 var test = 0
                 repeat(5) {
