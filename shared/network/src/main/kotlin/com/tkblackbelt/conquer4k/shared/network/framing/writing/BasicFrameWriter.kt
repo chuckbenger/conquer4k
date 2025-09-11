@@ -1,16 +1,16 @@
-package com.tkblackbelt.conquer4k.shared.network.transport.io
+package com.tkblackbelt.conquer4k.shared.network.framing.writing
 
-import com.tkblackbelt.conquer4k.shared.network.codec.FrameCodec
 import com.tkblackbelt.conquer4k.shared.network.ext.writeShortLe
+import com.tkblackbelt.conquer4k.shared.network.framing.codec.FrameCodec
 import io.ktor.utils.io.ByteWriteChannel
 import io.ktor.utils.io.writeBuffer
 import kotlinx.io.Buffer
 
-class FrameWriter(
+internal class BasicFrameWriter(
     private val channel: ByteWriteChannel,
     private val codec: FrameCodec,
-) {
-    suspend fun write(buffer: Buffer): Int {
+) : FrameWriter {
+    override suspend fun write(buffer: Buffer): Int {
         val size = buffer.size.toInt()
         val encLen = codec.encodeLength(size.toShort())
         val encBody = codec.encodeBody(buffer)
@@ -20,7 +20,7 @@ class FrameWriter(
         return size
     }
 
-    suspend fun flush() {
+    override suspend fun flush() {
         channel.flush()
     }
 }

@@ -1,8 +1,8 @@
-package com.tkblackbelt.conquer4k.shared.network.transport.tcp
+package com.tkblackbelt.conquer4k.shared.network.tcp
 
-import com.tkblackbelt.conquer4k.shared.network.transport.NetworkServer
-import com.tkblackbelt.conquer4k.shared.network.transport.SocketByteTransport
-import com.tkblackbelt.conquer4k.shared.network.transport.TransportHandler
+import com.tkblackbelt.conquer4k.shared.network.api.Connection
+import com.tkblackbelt.conquer4k.shared.network.api.ConnectionFactory
+import com.tkblackbelt.conquer4k.shared.network.api.NetworkServer
 import io.github.oshai.kotlinlogging.KotlinLogging
 import io.ktor.network.selector.SelectorManager
 import io.ktor.network.sockets.ServerSocket
@@ -33,10 +33,13 @@ data class TcpServerConfig(
     val lowDelayTos: Boolean = true,
 )
 
+typealias ConnectionHandler = suspend (Connection) -> Unit
+
 class TcpServer(
     private val config: TcpServerConfig,
     private val selector: SelectorManager,
-    private val handler: TransportHandler,
+    private val connectionFactory: ConnectionFactory,
+    private val handler: ConnectionHandler,
 ) : NetworkServer {
     private val scope = CoroutineScope(SupervisorJob() + Dispatchers.IO)
     private val started = AtomicBoolean(false)
@@ -99,14 +102,15 @@ class TcpServer(
 
     private fun CoroutineScope.launchHandler(socket: Socket) =
         launch(CoroutineName("tcp-conn-${socket.remoteAddress}")) {
+            var connection: Connection? = null
             try {
-                val transport = SocketByteTransport(this, socket)
-                handler.handle(transport)
+                connection = connectionFactory.create(this, socket)
+                handler(connection)
             } catch (_: CancellationException) {
             } catch (t: Throwable) {
                 logger.error(t) { "Handler failed for ${socket.remoteAddress}" }
             } finally {
-                runCatching { socket.close() }
+                runCatching { (connection ?: socket).close() }
                 connectionLimiter?.release()
             }
         }

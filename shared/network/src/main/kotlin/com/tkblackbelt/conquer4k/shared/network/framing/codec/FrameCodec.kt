@@ -1,4 +1,4 @@
-package com.tkblackbelt.conquer4k.shared.network.codec
+package com.tkblackbelt.conquer4k.shared.network.framing.codec
 
 import kotlinx.io.Buffer
 

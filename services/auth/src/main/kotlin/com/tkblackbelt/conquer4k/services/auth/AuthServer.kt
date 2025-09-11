@@ -1,12 +1,13 @@
 package com.tkblackbelt.conquer4k.services.auth
 
-import com.tkblackbelt.conquer4k.shared.network.codec.PlainCodec
-import com.tkblackbelt.conquer4k.shared.network.transport.ByteTransport
-import com.tkblackbelt.conquer4k.shared.network.transport.connection.FramedConnection
-import com.tkblackbelt.conquer4k.shared.network.transport.tcp.TcpClient
-import com.tkblackbelt.conquer4k.shared.network.transport.tcp.TcpClientConfig
-import com.tkblackbelt.conquer4k.shared.network.transport.tcp.TcpServer
-import com.tkblackbelt.conquer4k.shared.network.transport.tcp.TcpServerConfig
+import com.tkblackbelt.conquer4k.shared.network.framing.FramedFactorConfig
+import com.tkblackbelt.conquer4k.shared.network.framing.codec.PlainCodec
+import com.tkblackbelt.conquer4k.shared.network.framing.framedFactory
+import com.tkblackbelt.conquer4k.shared.network.framing.writing.BufferFrameWriterConfig
+import com.tkblackbelt.conquer4k.shared.network.tcp.TcpClient
+import com.tkblackbelt.conquer4k.shared.network.tcp.TcpClientConfig
+import com.tkblackbelt.conquer4k.shared.network.tcp.TcpServer
+import com.tkblackbelt.conquer4k.shared.network.tcp.TcpServerConfig
 import com.tkblackbelt.conquer4k.shared.protocol.serder.decodePacket
 import io.ktor.network.selector.SelectorManager
 import kotlinx.coroutines.Dispatchers
@@ -22,26 +23,22 @@ import kotlinx.io.writeShortLe
  * For now, this only boots a placeholder server and logs lifecycle events.
  */
 fun main() {
-    runBlocking {
-        val manager = SelectorManager(Dispatchers.IO)
-        val tcpServer =
-            TcpServer(TcpServerConfig("0.0.0.0", 8921), manager) { transport: ByteTransport ->
-                val codec = PlainCodec
-                val connection = FramedConnection(transport, codec)
+    val manager = SelectorManager(Dispatchers.IO)
 
-                connection.inbound().decodePacket().collect { packet ->
+    runBlocking {
+        val serverFactory = framedFactory(PlainCodec, FramedFactorConfig(BufferFrameWriterConfig()))
+        val tcpServer =
+            TcpServer(TcpServerConfig("0.0.0.0", 8921), manager, serverFactory) {
+                it.inbound().decodePacket().collect { packet ->
                     println("Received packet $packet")
                 }
-
-                println("Done")
             }
         tcpServer.start()
 
         launch(Dispatchers.IO) {
             try {
-                val transport = TcpClient(TcpClientConfig("0.0.0.0", 8921)).connect()
-                val codec = PlainCodec
-                val connection = FramedConnection(transport, codec)
+                val clientFactory = framedFactory(PlainCodec, FramedFactorConfig(BufferFrameWriterConfig()))
+                val connection = TcpClient(TcpClientConfig("0.0.0.0", 8921), manager, this, clientFactory).connect()
                 var test = 0
                 repeat(5) {
                     try {

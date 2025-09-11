@@ -1,11 +1,9 @@
-package com.tkblackbelt.conquer4k.shared.network.transport.io
+package com.tkblackbelt.conquer4k.shared.network.framing.reading
 
-import com.tkblackbelt.conquer4k.shared.network.codec.FrameCodec
+import com.tkblackbelt.conquer4k.shared.network.framing.codec.FrameCodec
 import io.ktor.utils.io.ByteReadChannel
 import io.ktor.utils.io.InternalAPI
 import io.ktor.utils.io.availableForRead
-import kotlinx.coroutines.flow.Flow
-import kotlinx.coroutines.flow.flow
 import kotlinx.io.Buffer
 import kotlinx.io.readShortLe
 
@@ -56,19 +54,3 @@ internal class FrameReader(
         return codec.decodeBody(buffer)
     }
 }
-
-internal fun ByteReadChannel.frames(codec: FrameCodec): Flow<Buffer> =
-    flow {
-        val reader = FrameReader(this@frames, codec)
-
-        while (true) {
-            awaitContent()
-
-            while (true) {
-                val frame = reader.readFrameOrNull() ?: break
-                emit(frame)
-            }
-
-            if (isClosedForRead) break
-        }
-    }
