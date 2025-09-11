@@ -12,34 +12,44 @@ import io.ktor.network.sockets.openReadChannel
 import io.ktor.network.sockets.openWriteChannel
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.ExperimentalCoroutinesApi
+import kotlinx.coroutines.channels.BufferOverflow
 import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.currentCoroutineContext
 import kotlinx.coroutines.flow.flow
 import kotlinx.coroutines.isActive
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.runBlocking
 import kotlinx.coroutines.selects.onTimeout
 import kotlinx.coroutines.selects.select
+import kotlinx.coroutines.withTimeout
 import kotlinx.io.Buffer
+import kotlin.time.Duration
 
 fun framedFactory(
     codec: FrameCodec,
-    config: FramedFactorConfig,
+    config: FramedFactoryConfig,
 ) = ConnectionFactory { scope, socket -> socket.framed(scope, codec, config) }
 
-data class FramedFactorConfig(
+data class FramedFactoryConfig(
     val bufferingConfig: BufferFrameWriterConfig,
+    val minFrameSize: Int = 1,
+    val maxFrameSize: Int = 1024,
+    val sendTimeout: Duration? = null,
 )
 
 @OptIn(ExperimentalCoroutinesApi::class)
 private fun Socket.framed(
     scope: CoroutineScope,
     codec: FrameCodec,
-    config: FramedFactorConfig,
+    config: FramedFactoryConfig,
 ): Connection {
     val inChannel = openReadChannel()
     val outChannel = openWriteChannel()
-    val inbox = Channel<Buffer>(config.bufferingConfig.bufferCapacity)
-    val reader = FrameReader(inChannel, codec)
+    val inbox = Channel<Buffer>(
+        capacity = config.bufferingConfig.bufferCapacity,
+        onBufferOverflow = config.bufferingConfig.overflowStrategy,
+    )
+    val reader = FrameReader(inChannel, codec, config.minFrameSize, config.maxFrameSize)
     val writer =
         BufferedFrameWriter(
             delegate = BasicFrameWriter(outChannel, codec),
@@ -60,7 +70,7 @@ private fun Socket.framed(
                                 writer.write(next)
                             }
                         }
-                        onTimeout(config.bufferingConfig.flushInternal) {
+                        onTimeout(config.bufferingConfig.flushInterval) {
                             writer.flush()
                         }
                     }
@@ -84,13 +94,22 @@ private fun Socket.framed(
         override fun inbound() = inboundFlow
 
         override suspend fun send(buffer: Buffer) {
-            inbox.send(buffer)
+            val res = inbox.trySend(buffer)
+            if (res.isSuccess) return
+            res.exceptionOrNull()?.let { throw it }
+
+            if (config.bufferingConfig.overflowStrategy == BufferOverflow.SUSPEND) {
+                config.sendTimeout?.let { timeout ->
+                    withTimeout(timeout) { inbox.send(buffer) }
+                } ?: inbox.send(buffer)
+            }
         }
 
         override fun close() {
             runCatching { inbox.close() }
-            runCatching { writerJob.cancel() }
+            runCatching { runBlocking { writerJob.cancel() } }
             runCatching { this@framed.close() }
         }
     }
 }
+

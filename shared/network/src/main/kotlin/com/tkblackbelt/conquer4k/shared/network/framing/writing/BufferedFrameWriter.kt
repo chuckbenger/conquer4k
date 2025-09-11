@@ -1,16 +1,15 @@
 package com.tkblackbelt.conquer4k.shared.network.framing.writing
 
-import io.github.oshai.kotlinlogging.KotlinLogging
+import kotlinx.coroutines.channels.BufferOverflow
 import kotlinx.io.Buffer
 import kotlin.time.Duration
 import kotlin.time.Duration.Companion.milliseconds
 
-private val logger = KotlinLogging.logger { }
-
 data class BufferFrameWriterConfig(
     val bufferCapacity: Int = 100,
-    val flushInternal: Duration = 10.milliseconds,
-    val flushBatchSize: Int = 1024,
+    val flushInterval: Duration = 10.milliseconds,
+    val flushBytesSize: Int = 1024,
+    val overflowStrategy: BufferOverflow = BufferOverflow.SUSPEND,
 )
 
 internal class BufferedFrameWriter(
@@ -18,7 +17,7 @@ internal class BufferedFrameWriter(
     private val config: BufferFrameWriterConfig,
 ) : FrameWriter {
     private var bytesSinceLastFlush: Int = 0
-    private var intervalNanos = config.flushInternal.inWholeNanoseconds
+    private var intervalNanos = config.flushInterval.inWholeNanoseconds
     private var nextFlushNanos = System.nanoTime() + intervalNanos
 
     override suspend fun write(buffer: Buffer): Int {
@@ -40,7 +39,7 @@ internal class BufferedFrameWriter(
         val now = System.nanoTime()
         val timeDue = now >= nextFlushNanos
 
-        if (bytesSinceLastFlush >= config.flushBatchSize || (timeDue && bytesSinceLastFlush > 0)) {
+        if (bytesSinceLastFlush >= config.flushBytesSize || (timeDue && bytesSinceLastFlush > 0)) {
             delegate.flush()
             bytesSinceLastFlush = 0
             nextFlushNanos = now + intervalNanos

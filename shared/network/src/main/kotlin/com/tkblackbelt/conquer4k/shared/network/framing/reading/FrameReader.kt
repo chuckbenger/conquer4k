@@ -7,14 +7,14 @@ import io.ktor.utils.io.availableForRead
 import kotlinx.io.Buffer
 import kotlinx.io.readShortLe
 
-private const val MIN_PACKET_SIZE = 1
-private const val MAX_PACKET_SIZE = 1024
 private const val NEED_HEADER = -1
 
 @OptIn(InternalAPI::class)
 internal class FrameReader(
     private val channel: ByteReadChannel,
     private val codec: FrameCodec,
+    private val minPacketSize: Int,
+    private val maxPacketSize: Int,
 ) {
     private var pendingSize: Int = NEED_HEADER
 
@@ -38,8 +38,8 @@ internal class FrameReader(
         val encoded = channel.readBuffer.readShortLe()
         val decoded = codec.decodeLength(encoded).toInt()
 
-        require(decoded in MIN_PACKET_SIZE..MAX_PACKET_SIZE) {
-            "Invalid frame length: $decoded (allowed $MIN_PACKET_SIZE..$MAX_PACKET_SIZE)"
+        require(decoded in minPacketSize..maxPacketSize) {
+            "Invalid frame length: $decoded (allowed $minPacketSize..$maxPacketSize)"
         }
 
         pendingSize = decoded

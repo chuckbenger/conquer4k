@@ -1,6 +1,6 @@
 package com.tkblackbelt.conquer4k.services.auth
 
-import com.tkblackbelt.conquer4k.shared.network.framing.FramedFactorConfig
+import com.tkblackbelt.conquer4k.shared.network.framing.FramedFactoryConfig
 import com.tkblackbelt.conquer4k.shared.network.framing.codec.PlainCodec
 import com.tkblackbelt.conquer4k.shared.network.framing.framedFactory
 import com.tkblackbelt.conquer4k.shared.network.framing.writing.BufferFrameWriterConfig
@@ -17,6 +17,7 @@ import kotlinx.coroutines.runBlocking
 import kotlinx.io.Buffer
 import kotlinx.io.writeIntLe
 import kotlinx.io.writeShortLe
+import kotlin.time.Duration.Companion.milliseconds
 
 /**
  * Entry point for the Auth service.
@@ -26,9 +27,9 @@ fun main() {
     val manager = SelectorManager(Dispatchers.IO)
 
     runBlocking {
-        val serverFactory = framedFactory(PlainCodec, FramedFactorConfig(BufferFrameWriterConfig()))
+        val serverFactory = framedFactory(PlainCodec, FramedFactoryConfig(BufferFrameWriterConfig()))
         val tcpServer =
-            TcpServer(TcpServerConfig("0.0.0.0", 8921), manager, serverFactory) {
+            TcpServer(TcpServerConfig("0.0.0.0", 8922), manager, serverFactory) {
                 it.inbound().decodePacket().collect { packet ->
                     println("Received packet $packet")
                 }
@@ -37,8 +38,11 @@ fun main() {
 
         launch(Dispatchers.IO) {
             try {
-                val clientFactory = framedFactory(PlainCodec, FramedFactorConfig(BufferFrameWriterConfig()))
-                val connection = TcpClient(TcpClientConfig("0.0.0.0", 8921), manager, this, clientFactory).connect()
+                val clientFactory = framedFactory(PlainCodec, FramedFactoryConfig(BufferFrameWriterConfig(
+                    flushInterval = 10.milliseconds,
+                    flushBytesSize = 1024
+                )))
+                val connection = TcpClient(TcpClientConfig("0.0.0.0", 8922), manager, this, clientFactory).connect()
                 var test = 0
                 repeat(5) {
                     try {
